@@ -1,9 +1,7 @@
 from bs4 import BeautifulSoup
-import requests
 import pandas as pd
 from splinter import Browser
 from webdriver_manager.chrome import ChromeDriverManager
-
 executable_path = {'executable_path': ChromeDriverManager().install()}
 
 def scrape():
@@ -16,7 +14,6 @@ def scrape():
         'facts': facts(),
         'hems': hems(browser)
     }
-
     return mars
 
 def news(browser):
@@ -28,104 +25,31 @@ def news(browser):
     news_p=soup.find('div',class_='article_teaser_body').text
     return news_title, news_p
 
-# ## Featured image
+def image(browser):
+    jpl_url='https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/index.html'
+    browser.visit(jpl_url)
+    browser.click_link_by_partial_text('FULL IMAGE')
+    return browser.find_by_css('img.fancybox-image')['src']
 
-# In[32]:
+def facts():
+    facts_url = "https://space-facts.com/mars/"
+    table = pd.read_html(facts_url)
+    return table[0].to_html()
 
-
-jpl_url='https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/index.html'
-browser.visit(jpl_url)
-    
-# HTML object
-jpl_html = browser.html
-
-# Parse HTML with Beautiful Soup
-jpl_soup = BeautifulSoup(html, 'html.parser')
-
-
-# In[ ]:
-
-
-# # pull images from website
-# base_url = soup.find_all('a', class_="showing fancybox-thumbs")
-# print(image_url)
-
-
-# In[35]:
-
-
-# featured_image_url = 'https://www.jpl.nasa.gov' + base_url
-# print(featured_image_url)
-
-
-# ## Mars Facts
-
-# In[44]:
-
-
-facts_url = "https://space-facts.com/mars/"
-table = pd.read_html(facts_url)
-table[0]
-
-
-# ## Mars hemispheres
-
-# In[46]:
-
-
-hem_url = ('https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars')
-
-
-# In[ ]:
-
-
-response = requests.get(url)
-soup = BeautifulSoup(response.text, 'html.parser')
-
-
-# In[48]:
-
-
-# Cerberus
-# https://astropedia.astrogeology.usgs.gov/download/Mars/Viking/cerberus_enhanced.tif
-
-# Schiaparelli 
-# https://astropedia.astrogeology.usgs.gov/download/Mars/Viking/schiaparelli_enhanced.tif 
-    
-# Syrtis Major
-# https://astropedia.astrogeology.usgs.gov/download/Mars/Viking/syrtis_major_enhanced.tif
-    
-# Valles Marineris
-# https://astropedia.astrogeology.usgs.gov/download/Mars/Viking/valles_marineris_enhanced.tif
-    
-    
-
-
-# In[ ]:
-
-
-# hemisphere_image_urls = [
-#     {"title": "Valles Marineris Hemisphere", "img_url": "..."},
-#     {"title": "Cerberus Hemisphere", "img_url": "..."},
-#     {"title": "Schiaparelli Hemisphere", "img_url": "..."},
-#     {"title": "Syrtis Major Hemisphere", "img_url": "..."},
-# ]
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
+def hems(browser):
+    hem_url = ('https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars')
+    browser.visit(hem_url)
+    links = browser.find_by_css('a.itemLink h3')
+    hems = []
+    for i in range(len(links)):
+        hem = {}
+        hem['title'] = browser.find_by_css('a.itemLink h3')[i].text
+        browser.find_by_css('a.itemLink h3')[i].click()
+        hem['url'] = browser.find_by_text('Sample')['href']
+        browser.back()
+        hems.append(hem)
+    browser.quit()
+    return hems
 
 
 
